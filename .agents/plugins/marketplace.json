@@ -1,0 +1,20 @@
+{
+  "name": "froggate",
+  "interface": {
+    "displayName": "FROGGATE"
+  },
+  "plugins": [
+    {
+      "name": "froggate",
+      "source": {
+        "source": "local",
+        "path": "./plugins/froggate"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
