@@ -1,0 +1,16 @@
+{
+  "name": "froggate",
+  "description": "FROGGATE skills for AI agents",
+  "owner": {
+    "name": "FROGGATE",
+    "url": "https://froggate.cloud"
+  },
+  "plugins": [
+    {
+      "name": "froggate",
+      "source": "./plugins/froggate",
+      "description": "Build integrations with FROGGATE — API key types, sign-in flows, endpoints, client code patterns and publishing web apps into FROGGATE.",
+      "category": "development"
+    }
+  ]
+}
