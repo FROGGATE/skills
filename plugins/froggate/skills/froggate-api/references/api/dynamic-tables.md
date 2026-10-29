@@ -44,6 +44,7 @@ Content type `application/json`:
     - `columns` (array of object) — Column structure for this table. Omitted when `verbose=false`.
       - `id` (integer) — Unique column ID Example: `1`.
       - `name` (string) — Column name Example: `Column 1`.
+      - `hint` (string) — Present only when the column has a hint (absent otherwise). The help text people see on the column header — what the column means and what belongs in it, written by whoever set up the section. Example: `Kolik kusů dílu jde do jednoho obalu.`.
       - `possibleValues` (object, nullable) — Only on selection columns: the allowed options as a map of option id → option name; the value written to the column is the id. Null while a selection column has no options yet, and always null for other types, including `from_other_table` — a link column has no option list; its permitted values are row ids of the section given by `linkedTableId`. Example: `{"125":"Option A","126":"Option B"}`.
         - each value (string)
       - `linkedTableId` (integer, nullable) — Only on `from_other_table` columns (absent on all other types). ID of the section this column links to — accepted values are row ids from that section. Null while the link has not been configured yet. Example: `1494`.
