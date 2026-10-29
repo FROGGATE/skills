@@ -1,6 +1,6 @@
 {
   "name": "froggate",
-  "version": "35.0.0",
+  "version": "36.0.0",
   "description": "Build integrations with FROGGATE — API key types, sign-in flows, endpoints, client code patterns and publishing web apps into FROGGATE.",
   "author": {
     "name": "FROGGATE",

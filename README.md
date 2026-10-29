@@ -47,9 +47,9 @@ Then tell the user the skill loads from the next session. If the user works in c
 
 ## Connect the FROGGATE MCP server too
 
-Building on FROGGATE takes two things: this plugin, which guides the code, and the FROGGATE MCP server, through which the agent works inside your account — it creates the sections, columns and statuses the app needs and reads and writes records while it builds. Without it the agent can't set anything up. You connect it with an API key from **Settings → API** in FROGGATE:
+Building on FROGGATE takes two things: this plugin, which guides the code, and the FROGGATE MCP server, through which the agent works inside your account — it creates the sections, columns and statuses the app needs and reads and writes records while it builds. Without it the agent can't set anything up. You connect it with your personal API key from **Settings → API** in FROGGATE — the agent then works as you, with your permissions:
 
-- **claude.ai, the Claude app and Cowork** — add it yourself as a custom connector with the key in a request header. Where Claude doesn't offer request headers for your account, it can't be connected there; use a tool on your computer instead.
+- **claude.ai, the Claude app and Cowork** — add it yourself as a custom connector with the key in a request header. Everyone adds their own; never add it for a whole organization, which would share one key with everybody. Where Claude doesn't offer request headers for your account, it can't be connected there; use a tool on your computer instead.
 - **Claude Code, Codex and other tools on your computer** — ask the agent to connect it; the skill tells it how, and you add the key to its configuration yourself, outside the conversation.
 
 Step-by-step guide (in Czech): https://client.froggate.cloud/documentation/konfigurace/vyvoj-s-ai.md
