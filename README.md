@@ -1,8 +1,11 @@
-# FROGGATE skills for AI agents
+# FROGGATE for AI agents
 
-Teach your AI agent to build apps and websites on [FROGGATE](https://froggate.cloud) — you don't have to be a developer, you say what you want to achieve. The agent knows the building blocks (sign-in and registration, shared links, public forms, website content from your sections, apps inside FROGGATE, automation, chat), sets each one up, chooses the right API key, writes the code and publishes the app straight into FROGGATE.
+Connect your AI agent to [FROGGATE](https://froggate.cloud) and let it work for you:
 
-Install it as a plugin — that is what keeps it up to date.
+- **In your account** — it finds and updates records, sets up sections, columns and statuses, and uses your chat when you allow it. It acts as you, with your permissions.
+- **On top of it** — it builds apps and websites on FROGGATE. You don't have to be a developer, you say what you want to achieve. The agent knows the building blocks (sign-in and registration, shared links, public forms, website content from your sections, apps inside FROGGATE, automation, chat), sets each one up, chooses the right API key, writes the code and prepares the app for publishing in FROGGATE — what only you can set there (the app's API key, publishing, section actions), it tells you step by step.
+
+Install it as a plugin — it brings the connection to your account along and keeps itself up to date.
 
 ## Install
 
@@ -43,16 +46,21 @@ Install the plugin for the tool you are running in, from a shell:
 - **Codex:** `codex plugin marketplace add FROGGATE/skills` and `codex plugin add froggate@froggate`.
 - **Anything else:** `npx skills add FROGGATE/skills -g`.
 
-Then tell the user the skill loads from the next session. If the user works in claude.ai, the desktop app or Cowork, you cannot install it there — give them the steps from the Claude section above.
+Then tell the user the skill loads from the next session and that the FROGGATE MCP server it brings waits for their sign-in: in Claude Code `/mcp` → `froggate` → Authenticate, in Codex `codex mcp login froggate` (see "Sign in to your FROGGATE account" below). If the user works in claude.ai, the desktop app or Cowork, you cannot install it there — give them the steps from the Claude section above.
 
-## Connect the FROGGATE MCP server too
+## Sign in to your FROGGATE account
 
-Building on FROGGATE takes two things: this plugin, which guides the code, and the FROGGATE MCP server, through which the agent works inside your account — it creates the sections, columns and statuses the app needs and reads and writes records while it builds. Without it the agent can't set anything up. You connect it with your personal API key from **Settings → API** in FROGGATE — the agent then works as you, with your permissions:
+The agent works inside your account through the FROGGATE MCP server, which the plugin brings along — its address is `https://mcp.froggate.cloud`. For everyday work it is all you need. Building takes it too: the agent creates the sections, columns and statuses the app needs and reads and writes records while it builds — without it the agent can't set anything up. You connect it by signing in with your FROGGATE account; on the sign-in page you choose the company, how long the connection lasts and whether it may use your chat. The agent then works as you, with your permissions:
 
-- **claude.ai, the Claude app and Cowork** — add it yourself as a custom connector with the key in a request header. Everyone adds their own; never add it for a whole organization, which would share one key with everybody. Where Claude doesn't offer request headers for your account, it can't be connected there; use a tool on your computer instead.
-- **Claude Code, Codex and other tools on your computer** — ask the agent to connect it; the skill tells it how, and you add the key to its configuration yourself, outside the conversation.
+- **claude.ai, the Claude app and Cowork** — in the plugin's **Connectors** tab choose Add and Connect. Without the plugin, add a custom connector with that address; the sign-in follows on first use.
+- **Claude Code** — run `/mcp`, pick `froggate` and Authenticate.
+- **ChatGPT and other tools with custom MCP servers** — add the address as a custom MCP server; the sign-in is the same.
+- **Codex** — the plugin asks you to sign in when you install it; later `codex mcp login froggate`.
+- **Other tools on your computer** — ask the agent to connect it; the skill tells it how.
 
-Step-by-step guide (in Czech): https://client.froggate.cloud/documentation/konfigurace/vyvoj-s-ai.md
+One connection works in one company. For another company, add the server again with the company's ID at the end of the address. Connecting needs the permission **Connecting AI tools** in FROGGATE; the sign-in page tells you whom to ask when you don't have it.
+
+Step-by-step guide (in Czech): https://client.froggate.cloud/documentation/pouzivani/ai-nastroje.md
 
 ## Versions
 

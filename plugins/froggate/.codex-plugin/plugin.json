@@ -1,7 +1,7 @@
 {
   "name": "froggate",
-  "version": "36.0.0",
-  "description": "Build integrations with FROGGATE — API key types, sign-in flows, endpoints, client code patterns and publishing web apps into FROGGATE.",
+  "version": "37.0.0",
+  "description": "Work in your FROGGATE account from your AI tool — find and update records, set up sections, use your chat — and build apps and websites on FROGGATE. You sign in with your own FROGGATE account.",
   "author": {
     "name": "FROGGATE",
     "url": "https://froggate.cloud"
@@ -10,8 +10,10 @@
   "repository": "https://github.com/FROGGATE/skills",
   "keywords": [
     "froggate",
+    "mcp",
     "api",
     "integration"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
 }
