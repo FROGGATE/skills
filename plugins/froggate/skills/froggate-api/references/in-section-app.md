@@ -1,6 +1,6 @@
 # Running inside a FROGGATE section (Internal application widget)
 
-This applies when the app is being built **specifically to run inside a FROGGATE section** as the "Internal application" widget — i.e. the user is shipping the app into FROGGATE (typically via **Settings → Aplikace**, then placing it via the Internal application widget on a board), not deploying it on its own domain. Such apps usually don't make sense outside FROGGATE because their entire purpose is to read/write FROGGATE section data with the user's API key.
+This applies when the app is being built **specifically to run inside a FROGGATE section** as the "Internal application" widget — i.e. the user is shipping the app into FROGGATE (typically via **Settings → Aplikace**, then placing it above a section's table or on a dashboard with the Internal application widget), not deploying it on its own domain. Such apps usually don't make sense outside FROGGATE because their entire purpose is to read/write FROGGATE section data with the user's API key.
 
 ## How the key gets in
 

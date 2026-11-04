@@ -6,8 +6,9 @@ combines with. Map the user's wish to blocks, settle the open product choices wi
 
 **Who sets what.** Sections, columns, statuses and most of their settings you create yourself
 through the FROGGATE MCP server — read its `get_settings_reference` before each column or setting;
-it says which type fits which need and what MCP cannot set yet. API keys and their permissions,
-publishing an app, section actions and add-ons the user sets in FROGGATE: give them the exact list
+it says which type fits which need and what MCP cannot set yet. Add-ons (widgets) above a section's
+table or on a dashboard you add through MCP too (`get_widget_types`, `save_widget`). API keys and their
+permissions, publishing an app and section actions the user sets in FROGGATE: give them the exact list
 of what to set, never a vague "configure the permissions".
 
 Contents: Data in sections · User sign-in · Registration · Shared lists for signed-in users ·
@@ -248,9 +249,10 @@ The app shown inside FROGGATE, in a section, for the company's own people — a 
 data it works with: a technician's checklist over a job, a planning view, a calculator over the
 section's records.
 
-Set up (user): publish the app (*Standalone page*), link a key to it on its **API klíč** tab, then
-in the section's settings → **Doplňky** (add-ons) add **Internal application** (*Interní aplikace*)
-with that app and switch it on. A section of the *Dashboard* type can hold it as its whole content.
+Set up: the user publishes the app (*Standalone page*) and links a key to it on its **API klíč** tab;
+then you add the **Internal application** (*Interní aplikace*) add-on with that app above the
+section's table through MCP (`save_widget`; without MCP the user adds it in the section's settings →
+**Doplňky**). A section of the *Dashboard* type can hold it as its whole content.
 
 The linked key decides what every viewer can do: each colleague who may see the section receives
 a temporary key with that key's scope, and can use it on the REST API outside the app too. So link
