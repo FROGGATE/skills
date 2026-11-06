@@ -2,7 +2,7 @@
 name: froggate-api
 description: "Guide to building apps and websites on FROGGATE and integrating with its API. Use when the user wants to build something on FROGGATE or connect something to it, or asks what can be built — server-side backend integration, public-facing presentation website, per-user frontend app with login and registration, a shared-record link (access token), an app that runs inside a FROGGATE section, publishing a web app into FROGGATE with content from sections, automation and webhooks, or a program that reads and posts messages in the company chat. Covers the building blocks and how to set each up in FROGGATE, all API key types (backend, fgs_public_, fgs_login_ incl. the per-record access-token mode, the in-section temporary key), and connecting the FROGGATE MCP server, which building on FROGGATE also needs."
 metadata:
-  version: "37"
+  version: "38"
 ---
 
 # FROGGATE API — Agent Skill
@@ -69,7 +69,7 @@ This file holds what every integration needs. Open a reference when the task rea
 | map the user's wish to building blocks, or set a block up in FROGGATE (which sections, columns, statuses, settings) | `references/building-blocks.md` |
 | set up or explain a key in detail — backend, public, login (sign-in methods, self-registration, e-mail existence), shared-record link, scope changes, per-table read/write, allowed origins | `references/access-model.md` |
 | call `/auth/*` (login code, password, access token, registration) | `references/auth-endpoints.md` |
-| read or write rows, statuses, files or selection options, or run a table action | `references/data-endpoints.md` |
+| read or write rows, statuses, files or selection options, compute totals or chart data over rows, or run a table action | `references/data-endpoints.md` |
 | write a value into a long-text (`text`) column — it is HTML with an allow-list | `references/text-column-html-format.md` |
 | read or post chat messages | `references/chat-endpoints.md` |
 | write the client code — TypeScript types, one client class per scenario, examples | `references/client-code.md` |

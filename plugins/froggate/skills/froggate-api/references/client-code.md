@@ -16,6 +16,27 @@ interface FgColumnData { columnId: number; value: string | number | null; }
 interface FgFile { fileName: string; base64file: string; note?: string; fileCategoryId?: number | null; }
 interface FgFileUpdate { fileId: number; fileCategoryId: number | null; }
 
+type FgFilterOperator = "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "between" | "in" | "notIn" | "contains" | "empty" | "notEmpty";
+interface FgFilterCondition { columnId: number; operator: FgFilterOperator; value?: string | number | (string | number)[]; }
+interface FgFilter {
+  status?: number;
+  id?: number;
+  columnsValues?: Record<string, string | number | null>;
+  columnsNotNull?: number[];
+  conditions?: FgFilterCondition[];
+}
+
+interface FgAggregateFigures { columnId: number; sum?: number | null; avg?: number | null; min?: number | string | null; max?: number | string | null; filled: number; }
+interface FgAggregateGroup { keys: { value: string | number | null; id?: number | null }[]; rowCount: number; columns: FgAggregateFigures[]; }
+interface FgAggregateResult {
+  tableId: number;
+  rowCount: number;
+  columns: FgAggregateFigures[];   // totals over all matching rows
+  groupCount?: number;             // present with groupBy
+  truncated?: boolean;
+  groups?: FgAggregateGroup[];
+}
+
 interface FgTableColumn {
   id: number;
   name: string;
@@ -131,7 +152,7 @@ class FroggateBackendApi {
     order?: "ASC" | "DESC";
     showFiles?: boolean;
     returnColumns?: number[];
-    filter?: { status?: number; id?: number; columnsValues?: Record<string, string | number | null>; columnsNotNull?: number[] };
+    filter?: FgFilter;
   }): Promise<{ pages: number; rows: FgRow[] }> {
     const res = await fetch(`${this.baseUrl}/dynamic-tables/get-table-rows`, {
       method: "POST",
@@ -151,6 +172,26 @@ class FroggateBackendApi {
     const json: FgApiResponse<{ parameters: { pages: number }; rows: FgRow[] }> = await res.json();
     if (json.status !== "ok") throw new Error(json.statusInfo ?? "API error");
     return { pages: json.data!.parameters.pages, rows: json.data!.rows };
+  }
+
+  // Totals, counts and chart data — computed by FROGGATE, never by paging through getRows.
+  async aggregateRows(tableId: number, options?: {
+    columns?: number[];
+    groupBy?: ({ columnId: number; dateBucket?: "day" | "week" | "month" | "quarter" | "year" } | { status: true })[];
+    orderBy?: { function: "count" | "sum" | "avg" | "min" | "max" | "filled"; columnId?: number; direction?: "ASC" | "DESC" };
+    limit?: number;
+    filter?: FgFilter;
+  }): Promise<FgAggregateResult> {
+    const res = await fetch(`${this.baseUrl}/dynamic-tables/aggregate-table-rows`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({ tableId, ...options }),
+    });
+    const json: FgApiResponse<FgAggregateResult> = await res.json();
+    // AGGREGATION_TIMEOUT → split into smaller date ranges and combine the results, or group more coarsely;
+    // TOO_MANY_REQUESTS → retry later.
+    if (json.status !== "ok") throw new Error(`${json.errorCode}: ${json.statusInfo ?? "API error"}`);
+    return json.data!;
   }
 
   async insertRow(
@@ -246,7 +287,7 @@ class FroggatePublicApi {
     page?: number;
     order?: "ASC" | "DESC";
     returnColumns?: number[];
-    filter?: { status?: number; id?: number; columnsValues?: Record<string, string | number | null>; columnsNotNull?: number[] };
+    filter?: FgFilter;
   }): Promise<{ pages: number; rows: FgRow[] }> {
     const res = await fetch(`${this.baseUrl}/dynamic-tables/get-table-rows`, {
       method: "POST",
@@ -401,7 +442,7 @@ class FroggateLoginApi {
     page?: number;
     order?: "ASC" | "DESC";
     returnColumns?: number[];
-    filter?: { columnsValues?: Record<string, string | number | null>; columnsNotNull?: number[] };
+    filter?: Pick<FgFilter, "columnsValues" | "columnsNotNull" | "conditions">;
   }): Promise<{ pages: number; rows: FgRow[] }> {
     const data = await this.dataCall("/dynamic-tables/get-table-rows", {
       tableId,
@@ -415,6 +456,17 @@ class FroggateLoginApi {
       ...(options?.filter && { filter: options.filter }),
     }) as { parameters: { pages: number }; rows: FgRow[] };
     return { pages: data.parameters.pages, rows: data.rows };
+  }
+
+  // Figures over the signed-in user's own rows (e.g. "my orders this year by month").
+  async aggregateRows(tableId: number, options?: {
+    columns?: number[];
+    groupBy?: ({ columnId: number; dateBucket?: "day" | "week" | "month" | "quarter" | "year" } | { status: true })[];
+    orderBy?: { function: "count" | "sum" | "avg" | "min" | "max" | "filled"; columnId?: number; direction?: "ASC" | "DESC" };
+    limit?: number;
+    filter?: Pick<FgFilter, "columnsValues" | "columnsNotNull" | "conditions">;
+  }): Promise<FgAggregateResult> {
+    return await this.dataCall("/dynamic-tables/aggregate-table-rows", { tableId, ...options }) as FgAggregateResult;
   }
 
   async insertRow(tableId: number, statusId: number, columnsData: FgColumnData[]): Promise<number> {
