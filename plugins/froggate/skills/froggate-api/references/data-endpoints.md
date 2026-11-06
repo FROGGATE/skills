@@ -54,13 +54,15 @@ Each column carries both `type` (high-level kind) and `valueFormat` (the JSON sh
 | `int` | `integer` (the record's own ID number) | `7` |
 | `image` | `object` — read-only, see below | — |
 
-System columns use the same vocabulary: "who added" and cumulative columns report as `text` / `string`, "time added" and "time the status was set" as `datetime`. Whether any column is writable is decided by its `editable` flag, not by its type.
+System columns use the same vocabulary, by the kind of value they hold: "who added" reports as `user` / `integer` (read like any user column), cumulative columns as `text` / `string`, "time added" and "time the status was set" as `datetime`. Whether any column is writable is decided by its `editable` flag, not by its type.
 
 For dropdowns (`type: selection`), the integer is the option id from the `possibleValues` map, not the option label.
 
 A link column (`type: from_other_table`) is **not** a dropdown: it has no `possibleValues` and no options to add. It carries two extra fields instead — `linkedTableId` (the section it points at) and `linkedColumnId` (which column of that section is shown) — and the value you send is a **row id from `linkedTableId`**, which you get with `get-table-rows` on that section. Send it as a whole number (`88`) or as a string of digits only (`"88"`, surrounding spaces are ignored); anything else — a decimal (`88.5`, `88.0`), other text, a list or `true`/`false` — is refused with an error quoting the value. `null` clears the link. Either field is `null` while the link is not fully configured.
 
 > **Changed:** link columns used to be reported as `type: "selection"`. If you branch on `type`, add the `from_other_table` case; `valueFormat` was and stays `integer`, so nothing about sending values changes.
+
+> **Changed:** the auto-filled column of who created the record used to be reported as `type: "text"` and read back as the bare user ID in `value`. It is now `type: "user"` and reads like any user column: `value` holds the name, `valueId` the ID, both `null` on a record the system created. Unlike a user column it is never writable: `editable: false` with `notEditableReason: columnTypeIsNeverWritableByApi`.
 
 Image columns (`type: image`) are **read-only** — the file is uploaded in the app, and `insert-table-row` / `update-table-row` reject them. Reading a row returns an object describing the stored file, or `null` when the cell is empty:
 
@@ -76,7 +78,7 @@ Each table also carries an `actions` array — the table actions this key may ex
 
 Each column also carries an `editable: boolean` flag. Columns where `editable` is `false` are read-only over the API — typically auto-filled values (formulas, sums, paired non-editable columns, link-driven date fills) or columns the current key has no write permission on. `insert-table-row` and `update-table-row` reject any `columnsData` entry pointing at such a column.
 
-A non-editable column also carries `notEditableReason`, and the reason decides what you can do about it. `filledByFormula`, `filledByAutomaticSeries`, `composedFromOtherColumns`, `filledBySumFromLinkedSection`, `valueTakenFromLinkedRecord`, `filledByDateDifference` and `filledByDateFromLinkedRows` mean the section **computes** the value, so no key can ever write it — to change it, write the columns it is derived from. `columnTypeIsNeverWritableByApi` (image columns) and `writingThroughApiDisabledForThisColumn` are properties of the column itself. Only `callerHasNoEditPermissionForThisColumn` and `columnIsOutsideTheApiKeyWriteScope` are about **your key**, so the same column may be writable for another key. Never present a computed column to the user as a broken configuration.
+A non-editable column also carries `notEditableReason`, and the reason decides what you can do about it. `filledByFormula`, `filledByAutomaticSeries`, `composedFromOtherColumns`, `filledBySumFromLinkedSection`, `valueTakenFromLinkedRecord`, `filledByDateDifference` and `filledByDateFromLinkedRows` mean the section **computes** the value, so no key can ever write it — to change it, write the columns it is derived from. `columnTypeIsNeverWritableByApi` (the columns the system fills itself — who created the record, when, the status change time, the record ID — and image columns) and `writingThroughApiDisabledForThisColumn` are properties of the column itself. Only `callerHasNoEditPermissionForThisColumn` and `columnIsOutsideTheApiKeyWriteScope` are about **your key**, so the same column may be writable for another key. Never present a computed column to the user as a broken configuration.
 
 A column that takes its value from a linked record and is set to let users edit that value (column setting `pairedToColumnEditable`) keeps a value you write into it — a value, `0` or `null` — and later changes of the linked record no longer overwrite it. Writing back the value the column already holds changes nothing: it stays linked, so reading a row and sending it back whole does not freeze its linked columns. Sent together with a different linked record, the value is kept even when it equals the stored one. A user-type column taken from a linked record is `editable` even without that setting; there a later change of the linked record overwrites what you wrote, and the rest of this paragraph does not apply. The one exception: `null` sent in the same call as the link column (the "record from another table" column it is taken through) means "take the value from the linked record", on insert and update alike, so sending the same upsert twice gives the same result. To put the linked value back on an existing row, send `null` together with the link column; leaving the column out of an update keeps what is stored. A column set to update only in some statuses takes nothing over for a row in another status — such a call leaves its value unchanged.
 
@@ -170,7 +172,11 @@ Response `data`:
     "status": 1,
     "id": 26,
     "columnsValues": { "110": "Prague", "111": null },
-    "columnsNotNull": [112]
+    "columnsNotNull": [112],
+    "conditions": [
+      { "columnId": 113, "operator": "between", "value": ["2026-09-01", "2026-09-30"] },
+      { "columnId": 114, "operator": "gt", "value": 1000 }
+    ]
   }
 }
 ```
@@ -181,6 +187,8 @@ Response `data`:
 - `parameters.showFiles` — if true, returns base64 file content in `base64file`; if false, `base64file` is null. `publicUrl` is always returned when available, regardless of this setting. Either way the `files` list is only populated when the key has **file read** enabled on that table (see "Files on a record" in `access-model.md`); otherwise it is empty and `showFiles` has no effect.
 - `parameters.returnColumns` — optional array of column IDs. If set, each row's `columns` map contains only these columns; if omitted, all columns the key can see are returned. Inaccessible / unknown IDs are ignored.
 - `filter` — optional; all conditions combined with AND. Keys in `columnsValues` are column IDs as strings (surrounding spaces are ignored; a key made of anything else than digits is refused); a string/number value matches that exact value, a `null` value matches empty cells (IS NULL). `columnsNotNull` is a list of column IDs that must be non-empty (IS NOT NULL). A filter may use only columns the key can read — a column outside the key's read scope (or one the key's user may not see) is refused with an error naming it, never silently ignored. A column of a section this table links to (through a `from_other_table` column) filters through that link, and only linked records the key can read count: those in the statuses the key allows for that section, never deleted ones. Such a column is usable when it is the link's display value (the `valueDisplay` a read returns for that link) and the key reads the link column, or otherwise when the key may read the linked section — for a signed-in user only a shared section. `filter` must be an object; an empty list (`[]`) counts as no filter.
+- `filter.conditions` — conditions with an operator, for what an exact match cannot say: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `between` (`[from, to]`, both included; on a number or a date `from` after `to` is refused, not answered with nothing), `in` / `notIn` (a list), `contains` (text), `empty`, `notEmpty` (no `value`). `neq` and `notIn` also match empty cells. On a date-and-time column a bare date `YYYY-MM-DD` means the whole day, so `between ["2026-09-01", "2026-09-30"]` includes the evening of the 30th. A selection takes option IDs (a number, or the same digits as text — the keys of `possibleValues` are strings) or option names; a value that is neither is refused, a user or who-added column user IDs, a link column row IDs, and these take only `eq`, `neq`, `in`, `notIn`, `empty`, `notEmpty`. The same read rule as for `columnsValues` applies, a column of a linked section included. An operator the column's type does not take is refused with `INVALID_PARAMETER` naming the ones it does.
+- **Totals, counts, averages or a chart:** use `aggregate-table-rows` below, not a loop over the pages adding rows up in your code.
 - For login-flow keys: only the user's own rows are returned regardless of filter; the password column on the user table is stripped. A shared section returns all its rows in the allowed statuses to every signed-in user.
 - For all keys with a scope-restricted backing key: only allowed columns appear in each row, and `files` is empty unless file read is enabled on the table.
 
@@ -213,9 +221,57 @@ Response `data`:
 
 `parameters.rows` is the total number of rows matching the filter (across all pages), `parameters.pages` the number of pages at the requested `limit`.
 
-`valueId` is set for `selection` columns (the option's ID, `value` holds its name) and `user` columns (the user's ID, `value` holds their name). `valueDisplay` is set for `from_other_table` columns: `value` holds the linked record's ID and `valueDisplay` that record's displayed column — the same value a filter through the link matches. In every other case both are `null`.
+`valueId` is set for `selection` columns (the option's ID, `value` holds its name) and `user` columns (the user's ID, `value` holds their name — including the auto-filled column of who created the record, empty on a record the system created). `valueDisplay` is set for `from_other_table` columns: `value` holds the linked record's ID and `valueDisplay` that record's displayed column — the same value a filter through the link matches. In every other case both are `null`.
 
 **File display tip:** when rendering an image or video on a frontend page, use `publicUrl` directly in `<img src=…>` / `<video src=…>`. Do **not** fetch `base64file` for display — that downloads the entire file through the API and burns bandwidth and quota.
+
+## POST /dynamic-tables/aggregate-table-rows
+
+Figures over the rows of a table computed on the server — per column the sum, average, minimum, maximum and the number of filled cells, plus row counts — optionally grouped. It covers dashboards, report numbers and charts in one call whatever the size of the table; reading every row through `get-table-rows` to add them up does not scale and costs quota.
+
+**Which keys:** a backend key, a login-flow key (the signed-in user's own rows) and the temporary key an application receives inside a FROGGATE section (`fgs_temp_…`, with the scope of the key it was issued from). A public key gets **403** — it may only read and insert rows, so a public website shows figures computed by your backend, not by the browser.
+
+```json
+{
+  "tableId": 25,
+  "columns": [114],
+  "groupBy": [{ "columnId": 113, "dateBucket": "month" }, { "status": true }],
+  "orderBy": { "function": "sum", "columnId": 114, "direction": "DESC" },
+  "limit": 100,
+  "filter": {
+    "conditions": [{ "columnId": 113, "operator": "between", "value": ["2026-01-01", "2026-12-31"] }]
+  }
+}
+```
+
+- `columns` — the columns to compute figures for. Each comes back with every figure its type has: a number `sum`, `avg`, `min`, `max`, `filled`; a date or date and time `min`, `max`, `filled`; anything else `filled`. Without `columns` only row counts come back.
+- `groupBy` — up to two items: `{ "columnId": … }` (a date or date-and-time column takes `dateBucket`: `day` — the default —, `week`, `month`, `quarter`, `year`) or `{ "status": true }`. A long-text or image column cannot be grouped by.
+- `orderBy` — orders the groups by a figure (`count`, or `sum` / `avg` / `min` / `max` / `filled` of a column in `columns`) instead of by their values; with `limit` it gives a top list, also over more than 10000 groups (then `groupCount` is absent).
+- `limit` — groups to return (default 100, max 1000).
+- `filter` — the same filter as `get-table-rows`; the figures cover exactly the rows `get-table-rows` would return with it, with the same key scope (for a signed-in user their own rows).
+
+Response `data`:
+```json
+{
+  "tableId": 25,
+  "rowCount": 1250,
+  "columns": [{ "columnId": 114, "sum": 184250.5, "avg": 147.4, "min": 12, "max": 9800, "filled": 1250 }],
+  "groupBy": [{ "columnId": 113, "dateBucket": "month" }, { "status": true }],
+  "groupCount": 24,
+  "truncated": false,
+  "groups": [
+    {
+      "keys": [{ "value": "2026-01" }, { "id": 1, "value": "New" }],
+      "rowCount": 104,
+      "columns": [{ "columnId": 114, "sum": 15320, "avg": 147.31, "min": 20, "max": 900, "filled": 104 }]
+    }
+  ]
+}
+```
+
+`rowCount` and `columns` at the top are the totals over all matching rows, whatever `limit` returned. A group's `keys` follow `groupBy`: a period (`2026-09-30`, `2026-W39`, `2026-09`, `2026-Q3`, `2026`), a selection's option name, a user's name (user and who-added columns), a linked row's display value or a status name, with `id` for a selection, user, who-added, link and status; an empty cell is `"value": null`. A figure a type does not have is absent; `sum`, `avg`, `min`, `max` are `null` when no cell is filled.
+
+Errors to handle: `AGGREGATION_TIMEOUT` — the aggregation ran too long and was stopped; split it into smaller parts (one call per year or quarter with a date range) and combine the results — sums, counts, minimum and maximum combine exactly, an average is the combined sum divided by the combined `filled` — or group more coarsely. Never show a figure for a narrower part as the answer to the whole question. `TOO_MANY_GROUPS` — more than 10000 groups without `orderBy`; for a top list add `orderBy` and `limit`, otherwise group by something with fewer distinct values. `TOO_MANY_REQUESTS` — the same caller has other aggregations running; retry after they finish. A column the key may not read is refused with HTTP 403 naming it.
 
 ## POST /dynamic-tables/insert-column-selection-value
 
